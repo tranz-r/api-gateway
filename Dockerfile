@@ -1,13 +1,13 @@
-FROM openresty/openresty:1.21.4.1-4-alpine
+FROM nginx:1.25-alpine
 
-# Install dependencies
-RUN apk add --no-cache curl jq perl
+# Install Lua dependencies
+RUN apk add --no-cache lua5.1 lua5.1-dev openssl-dev
 
-# Install lua-resty-http and lua-cjson
-RUN opm get ledgetech/lua-resty-http
+# Copy configurations
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY api-gateway.conf /etc/nginx/conf.d/
+COPY lua/ /etc/nginx/lua/
 
-# Copy configs and script
-COPY gateway.conf /etc/nginx/conf.d/default.conf
-COPY jwt_verifier.lua /etc/nginx/lua/jwt_verifier.lua
-
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost/healthz || exit 1
 EXPOSE 80
