@@ -6,35 +6,30 @@ on:
       - main
 
 jobs:
-  semver:
+  release:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_version.outputs.version }}
+      next_version: ${{ steps.semantic-release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Trigger PAT access request
-        run: |
-          curl -s -H "Authorization: token ${{ secrets.PAT }}" \
-                https://api.github.com/repos/${{ github.repository }}
-
-      - name: Set up go-semantic-release
+      - name: Run semantic release
+        id: semantic-release
         uses: go-semantic-release/action@v1.24.1
         with:
             github-token: ${{ secrets.PAT }}
             allow-initial-development-versions: true
 
-      - name: Get next version
-        id: get_version
-        run: |
-          VERSION=$(go-semantic-release version --print | jq -r .next)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Output the new version
+        run: echo "New version is ${{ steps.semantic-release.outputs.version }}"
         
 
   docker:
     runs-on: ubuntu-latest
-    needs: semver
+    needs: release
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,7 +43,7 @@ jobs:
 
       - name: Build and Push Image to GHCR
         run: |
-          VERSION=${{ needs.semver.outputs.version }}
+          VERSION=${{ needs.release.outputs.next_version }}
           IMAGE=ghcr.io/${{ github.repository_owner }}/api-gateway 
 
           docker build -t $IMAGE:$VERSION .
