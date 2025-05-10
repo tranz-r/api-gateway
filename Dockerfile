@@ -1,7 +1,9 @@
 FROM openresty/openresty:alpine
 
-# Install JWT dependency
-RUN opm get ledgetech/lua-resty-jwt
+# Install dependencies (including perl for opm)
+RUN apk add --no-cache perl && \
+    opm get ledgetech/lua-resty-jwt && \
+    apk del perl
 
 # Copy configurations
 COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
