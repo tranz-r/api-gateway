@@ -1,9 +1,8 @@
 FROM openresty/openresty:alpine
 
-# Install dependencies (including perl for opm)
-RUN apk add --no-cache perl && \
-    opm get ledgetech/lua-resty-jwt && \
-    apk del perl
+RUN apk add --no-cache lua5.1 luarocks5.1 && \
+    luarocks-5.1 install lua-resty-jwt && \
+    apk del lua5.1 luarocks5.1
 
 # Copy configurations
 COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
