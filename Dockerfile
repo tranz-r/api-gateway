@@ -1,7 +1,7 @@
 FROM openresty/openresty:1.21.4.1-4-alpine
 
 # Install dependencies
-RUN apk add --no-cache curl jq
+RUN apk add --no-cache curl jq perl
 
 # Install lua-resty-http and lua-cjson
 RUN opm get ledgetech/lua-resty-http && \
