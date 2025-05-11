@@ -1,28 +1,39 @@
-FROM openresty/openresty:alpine
+# Builder Container
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
+WORKDIR /app
+ARG PROJECT_PATH="./Src/APIGateway.Proxy/APIGateway.Proxy.csproj"
 
-# Install dependencies as root
-USER root
+ARG BUILD_CONFIGURATION=Release
 
-# Method 1: Using luarocks (most reliable)
-RUN apk add --no-cache lua5.1 luarocks5.1 && \
-    luarocks-5.1 install lua-resty-jwt && \
-    apk del lua5.1 luarocks5.1
+COPY . .
+RUN dotnet restore $PROJECT_PATH --no-cache --verbosity normal --runtime linux-musl-x64
+RUN dotnet publish $PROJECT_PATH --configuration $BUILD_CONFIGURATION --output /app/publish --no-self-contained --no-restore --runtime linux-musl-x64 /p:DebugTyp="None" /p:DebugSymbol=false
 
-# Create nginx user and set permissions
-RUN addgroup -S nginx && \
-    adduser -S -G nginx nginx && \
-    mkdir -p /var/log/nginx && \
-    chown -R nginx:nginx /var/log/nginx
+# Runtime Container
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
 
-# Copy configurations
-COPY --chown=nginx:nginx nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
-COPY --chown=nginx:nginx api-gateway.conf /etc/nginx/conf.d/
-COPY --chown=nginx:nginx lua/ /etc/nginx/lua/
+# Install Timezone and culture to alpine
+RUN apk add --no-cache tzdata
 
-# Switch to non-root user
-USER nginx
+# Install cultures (same approach as Alpine SDK image)
+RUN apk add --no-cache icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost/healthz || exit 1
 
+WORKDIR /app
+COPY --from=builder /app/publish ./
+
+# Add a readonly user and set it as default
+RUN adduser \
+  --disabled-password \
+  --home /app \
+  --gecos '' 1000 \
+  && chown -R 1000 /app
+USER 1000
+
+# Expose ports
+ENV ASPNETCORE_URLS=http://+:80;https://+:443
 EXPOSE 80
+EXPOSE 443
+
+ENTRYPOINT ["dotnet", "APIGateway.Proxy.dll"]

@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{8F73AA6C-27B8-44EB-BA25-BF71B7AC55EB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C1C0F9E3-6C6A-4717-B1C4-0AE1D02A53AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIGateway.Proxy", "Src\APIGateway.Proxy\APIGateway.Proxy.csproj", "{EDD571D3-6331-4703-B202-CA5D8FE75088}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EDD571D3-6331-4703-B202-CA5D8FE75088} = {8F73AA6C-27B8-44EB-BA25-BF71B7AC55EB}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EDD571D3-6331-4703-B202-CA5D8FE75088}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDD571D3-6331-4703-B202-CA5D8FE75088}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDD571D3-6331-4703-B202-CA5D8FE75088}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDD571D3-6331-4703-B202-CA5D8FE75088}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
