@@ -32,8 +32,7 @@ RUN adduser \
 USER 1000
 
 # Expose ports
-ENV ASPNETCORE_URLS=http://+:80;https://+:443
+ENV ASPNETCORE_URLS=http://+:80
 EXPOSE 80
-EXPOSE 443
 
 ENTRYPOINT ["dotnet", "APIGateway.Proxy.dll"]
