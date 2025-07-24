@@ -30,6 +30,7 @@ try
 
     app.UseHttpLogging();
     app.MapHealthChecks("/healthz");
+    app.MapHealthChecks("/ready");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapReverseProxy().RequireAuthorization();
