@@ -32,7 +32,7 @@ RUN adduser \
 USER 1000
 
 # Expose ports
-ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_URLS="http://+:80;http://+:8080"
 EXPOSE 80
 EXPOSE 8080
 
