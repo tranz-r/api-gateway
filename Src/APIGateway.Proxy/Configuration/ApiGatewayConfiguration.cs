@@ -1,8 +1,10 @@
 ﻿using System.Security.Claims;
+using System.Text;
 using APIGateway.Proxy.Auth;
 using APIGateway.Proxy.Auth.Requirements.PaymentRead;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -62,8 +64,11 @@ internal static class ApiGatewayConfiguration
             );
     }
     
-    internal static void RegisterAuthentication(this IServiceCollection services)
+    internal static void RegisterAuthentication(this IServiceCollection services, WebApplicationBuilder builder)
     {
+        var secret = builder.Configuration["SUPER_BASE_JWT_SECRET_KEY"];
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -71,25 +76,22 @@ internal static class ApiGatewayConfiguration
         })
         .AddJwtBearer(options =>
         {
-            options.Authority = "https://iam.labgrid.net/realms/tranzr";
-            options.MetadataAddress = "https://iam.labgrid.net/realms/tranzr/protocol/openid-connect/certs";
-            options.UseSecurityTokenValidators = true;
-            options.RequireHttpsMetadata = true;
-            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            options.Authority = $"https://{builder.Configuration["SUPER_BASE_PROJECT_ID"]}.supabase.co/auth/v1";
+            options.Audience = "authenticated";
+            options.IncludeErrorDetails = true; // Helpful for debugging
+
+            options.TokenValidationParameters = new TokenValidationParameters
             {
-                NameClaimType = ClaimTypes.Name,
-                RoleClaimType = ClaimTypes.Role,
+                IssuerSigningKey = key,
                 ValidateIssuer = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuers = [
-                    "https://iam.labgrid.net/realms/tranzr"
-                ],
+                ValidIssuer = options.Authority,
+
                 ValidateAudience = true,
-                ValidAudiences = [
-                    "tranzr-api"
-                ],
-                ValidateLifetime = true
+                ValidAudience = options.Audience,
+          
+                ValidateLifetime = true,
+                //ClockSkew = TimeSpan.FromMinutes(2)
             };
-        });
+        });;
     }
 }

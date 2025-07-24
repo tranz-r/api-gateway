@@ -16,7 +16,7 @@ try
 
     builder.Services.AddHttpLogging(o => o.CombineLogs = true);
 
-    builder.Services.RegisterAuthentication();
+    builder.Services.RegisterAuthentication(builder);
 
     // Add services to the container.
     builder.Services.RegisterAuthorizationPolicies();
@@ -24,7 +24,7 @@ try
     builder.Services.AddReverseProxy()
         .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-    builder.Services.RegisterOpenTelemetry(builder);
+    // builder.Services.RegisterOpenTelemetry(builder);
 
     var app = builder.Build();
 
