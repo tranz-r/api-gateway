@@ -1,5 +1,8 @@
-﻿using System.Security.Claims;
+﻿using System.IO.Pipes;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using APIGateway.Proxy.Auth;
 using APIGateway.Proxy.Auth.Requirements.PaymentRead;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -66,32 +69,61 @@ internal static class ApiGatewayConfiguration
     
     internal static void RegisterAuthentication(this IServiceCollection services, WebApplicationBuilder builder)
     {
-        var secret = builder.Configuration["SUPER_BASE_JWT_SECRET_KEY"];
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-        
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.Authority = $"https://{builder.Configuration["SUPER_BASE_PROJECT_ID"]}.supabase.co/auth/v1";
-            options.Audience = "authenticated";
-            options.IncludeErrorDetails = true; // Helpful for debugging
+        var projectId = builder.Configuration["SUPER_BASE_PROJECT_ID"];
+        var issuer = $"https://{projectId}.supabase.co/auth/v1";
+        var jwksUri = $"{issuer}/.well-known/jwks.json";
 
-            options.TokenValidationParameters = new TokenValidationParameters
+        // 🔑 Load keys at app startup
+        var signingKeys =  LoadSupabaseRsaKeys(jwksUri).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                IssuerSigningKey = key,
-                ValidateIssuer = true,
-                ValidIssuer = options.Authority,
+                options.IncludeErrorDetails = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = issuer,
 
-                ValidateAudience = true,
-                ValidAudience = options.Audience,
-          
-                ValidateLifetime = true,
-                //ClockSkew = TimeSpan.FromMinutes(2)
+                    ValidateAudience = true,
+                    ValidAudience = "authenticated",
+
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeys = signingKeys,
+                    ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 }
+                };
+            });
+    }
+    
+    public static async Task<List<SecurityKey>> LoadSupabaseRsaKeys(string jwksUrl)
+    {
+        using var client = new HttpClient();
+        var json = await client.GetStringAsync(jwksUrl);
+        var doc = JsonDocument.Parse(json);
+        var keys = new List<SecurityKey>();
+
+        foreach (var jwk in doc.RootElement.GetProperty("keys").EnumerateArray())
+        {
+            if (jwk.GetProperty("kty").GetString() != "RSA") continue;
+
+            var e = Base64UrlEncoder.DecodeBytes(jwk.GetProperty("e").GetString());
+            var n = Base64UrlEncoder.DecodeBytes(jwk.GetProperty("n").GetString());
+
+            var rsaParams = new RSAParameters
+            {
+                Exponent = e,
+                Modulus = n
             };
-        });;
+
+            var key = new RsaSecurityKey(RSA.Create(rsaParams))
+            {
+                KeyId = jwk.GetProperty("kid").GetString()
+            };
+
+            keys.Add(key);
+        }
+
+        return keys;
     }
 }
