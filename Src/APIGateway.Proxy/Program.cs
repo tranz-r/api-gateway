@@ -1,4 +1,5 @@
 using APIGateway.Proxy.Configuration;
+using APIGateway.Proxy.Constants;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -19,6 +20,18 @@ try
     builder.Services.RegisterAuthentication(builder);
 
     // Add services to the container.
+    builder.Services.AddCors(options =>
+    {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        options.AddPolicy(Cors.TranzrAPIGatewayCorsPolicy,
+            policy =>
+            {
+                policy.WithOrigins(allowedOrigins ?? [])
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
+    });
     builder.Services.RegisterAuthorizationPolicies();
     
     builder.Services.AddReverseProxy()
