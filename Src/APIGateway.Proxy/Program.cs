@@ -1,4 +1,4 @@
-using APIGateway.Proxy.Configuration;
+﻿using APIGateway.Proxy.Configuration;
 using APIGateway.Proxy.Constants;
 using Serilog;
 
@@ -33,7 +33,6 @@ try
             });
     });
     builder.Services.RegisterAuthorizationPolicies();
-    
     builder.Services.AddReverseProxy()
         .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 

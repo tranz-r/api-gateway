@@ -1,4 +1,4 @@
-namespace APIGateway.Proxy.Constants;
+﻿namespace APIGateway.Proxy.Constants;
 
 public static class Cors
 {

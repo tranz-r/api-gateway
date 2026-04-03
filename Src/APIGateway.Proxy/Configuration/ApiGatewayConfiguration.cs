@@ -1,4 +1,4 @@
-using APIGateway.Proxy.Auth;
+﻿using APIGateway.Proxy.Auth;
 using APIGateway.Proxy.Auth.Requirements.PaymentRead;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -20,13 +20,13 @@ internal static class ApiGatewayConfiguration
                 policy.RequireAuthenticatedUser();
             });
     }
-    
+
     internal static void RegisterAuthorizationHandlers(this IServiceCollection services)
     {
         services.AddSingleton<IAuthorizationHandler, PaymentReadRequirementHandler>();
     }
-    
-    internal static void RegisterOpenTelemetry(this IServiceCollection services, WebApplicationBuilder builder)
+
+    internal static void RegisterOpenTelemetry(this IServiceCollection _, WebApplicationBuilder builder)
     {
         // Add OpenTelemetry
         // https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel
@@ -61,13 +61,13 @@ internal static class ApiGatewayConfiguration
                 .AddOtlpExporter(opt => { opt.Endpoint = new Uri("http://otel-collector:4317"); })
             );
     }
-    
-    internal static void RegisterAuthentication(this IServiceCollection services, WebApplicationBuilder builder)
+
+    internal static void RegisterAuthentication(this IServiceCollection _, WebApplicationBuilder builder)
     {
-        var projectId = builder.Configuration["SUPER_BASE_PROJECT_ID"] ;
+        var projectId = builder.Configuration["SUPER_BASE_PROJECT_ID"];
         var issuer = $"https://{projectId}.supabase.co/auth/v1";
         const string audience = "authenticated";
-        
+
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -94,20 +94,20 @@ internal static class ApiGatewayConfiguration
                     RoleClaimType = "role"
                 };
 
-                options.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
-                    {
-                        Console.WriteLine($"JWT failed: {context.Exception}");
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = context =>
-                    {
-                        var sub = context.Principal?.FindFirst("sub")?.Value;
-                        Console.WriteLine($"JWT ok for sub={sub}");
-                        return Task.CompletedTask;
-                    }
-                };
+                // options.Events = new JwtBearerEvents
+                // {
+                //     OnAuthenticationFailed = context =>
+                //     {
+                //         Console.WriteLine($"JWT failed: {context.Exception}");
+                //         return Task.CompletedTask;
+                //     },
+                //     OnTokenValidated = context =>
+                //     {
+                //         var sub = context.Principal?.FindFirst("sub")?.Value;
+                //         Console.WriteLine($"JWT ok for sub={sub}");
+                //         return Task.CompletedTask;
+                //     }
+                // };
             });
     }
 }
