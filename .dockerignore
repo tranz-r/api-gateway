@@ -1,1 +1,8 @@
 Tests/
+
+# Host build output must not overwrite the image restore (fixes NETSDK1047 on publish -r).
+**/bin/
+**/obj/
+
+# Keep repo-root MSBuild files in the build context — the Dockerfile copies
+# Directory.Build.props and Directory.Packages.props before restore (CPM).
