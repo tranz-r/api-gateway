@@ -3,7 +3,8 @@ using APIGateway.Proxy.Auth.Requirements.PaymentRead;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using OpenTelemetry.Logs;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -28,38 +29,34 @@ internal static class ApiGatewayConfiguration
 
     internal static void RegisterOpenTelemetry(this IServiceCollection _, WebApplicationBuilder builder)
     {
-        // Add OpenTelemetry
-        // https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel
+        const string serviceName = "tranzr-api-gateway";
 
-        builder.Logging.AddOpenTelemetry(options =>
+        Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(
+        [
+            new TraceContextPropagator(),
+            new BaggagePropagator()
+        ]));
+
+        var openTelemetry = builder.Services.AddOpenTelemetry();
+        openTelemetry.ConfigureResource(resource =>
+            resource.AddService(serviceName));
+
+        openTelemetry.WithTracing(tracing =>
+            tracing
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddSource("Wolverine"));
+
+        openTelemetry.WithMetrics(metrics =>
+            metrics
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddMeter("Wolverine*"));
+
+        if (IsOtlpExportEnabled(builder.Configuration))
         {
-            options
-                .SetResourceBuilder(
-                    ResourceBuilder.CreateDefault()
-                        .AddService("tranzr-api-gateway")
-                )
-                .AddConsoleExporter(); // Optional, for local debugging
-        });
-
-        builder.Services.AddOpenTelemetry()
-            .WithTracing(tracerProviderBuilder => tracerProviderBuilder
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
-                .AddConsoleExporter()
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("tranzr-api-gateway"))
-                .AddOtlpExporter(opt =>
-                {
-                    opt.Endpoint = new Uri("http://otel-collector:4317"); // Update as needed
-                })
-            )
-            .WithMetrics(metricsBuilder => metricsBuilder
-                .AddAspNetCoreInstrumentation()
-                .AddConsoleExporter()
-                .AddHttpClientInstrumentation()
-                // .AddPrometheusExporter()
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("tranzr-api-gateway"))
-                .AddOtlpExporter(opt => { opt.Endpoint = new Uri("http://otel-collector:4317"); })
-            );
+            openTelemetry.UseOtlpExporter();
+        }
     }
 
     internal static void RegisterAuthentication(this IServiceCollection _, WebApplicationBuilder builder)
@@ -109,5 +106,19 @@ internal static class ApiGatewayConfiguration
                 //     }
                 // };
             });
+    }
+
+    private static bool IsOtlpExportEnabled(IConfiguration configuration)
+    {
+        if (string.Equals(
+                configuration["OTEL_SDK_DISABLED"],
+                "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return !string.IsNullOrWhiteSpace(configuration["OTEL_EXPORTER_OTLP_ENDPOINT"])
+               || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
     }
 }
