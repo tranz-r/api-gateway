@@ -1,5 +1,6 @@
 ﻿using APIGateway.Proxy.Auth;
 using APIGateway.Proxy.Auth.Requirements.PaymentRead;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -43,8 +44,10 @@ internal static class ApiGatewayConfiguration
 
         openTelemetry.WithTracing(tracing =>
             tracing
-                .AddAspNetCoreInstrumentation()
+                .AddAspNetCoreInstrumentation(aspNetCore =>
+                    aspNetCore.Filter = ExcludeHealthCheckRequests)
                 .AddHttpClientInstrumentation()
+                .AddSource("Yarp.ReverseProxy")
                 .AddSource("Wolverine"));
 
         openTelemetry.WithMetrics(metrics =>
@@ -107,6 +110,10 @@ internal static class ApiGatewayConfiguration
                 // };
             });
     }
+
+    private static bool ExcludeHealthCheckRequests(HttpContext context) =>
+        !context.Request.Path.StartsWithSegments("/healthz")
+        && !context.Request.Path.StartsWithSegments("/ready");
 
     private static bool IsOtlpExportEnabled(IConfiguration configuration)
     {

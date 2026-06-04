@@ -4,6 +4,9 @@ using Serilog;
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
+    .MinimumLevel.Override("Microsoft.AspNetCore.Hosting.Diagnostics", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Routing.EndpointMiddleware", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Yarp", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
     .CreateLogger();
 
@@ -15,7 +18,7 @@ try
     builder.Services.RegisterAuthorizationHandlers();
     builder.Services.AddHealthChecks();
 
-    builder.Services.AddHttpLogging(o => o.CombineLogs = true);
+    builder.Services.AddTranzrHttpLogging();
 
     builder.Services.RegisterAuthentication(builder);
 
@@ -40,7 +43,7 @@ try
 
     var app = builder.Build();
 
-    app.UseHttpLogging();
+    app.UseTranzrHttpLogging();
     app.MapHealthChecks("/healthz");
     app.MapHealthChecks("/ready");
     app.UseCors(Cors.TranzrAPIGatewayCorsPolicy);
