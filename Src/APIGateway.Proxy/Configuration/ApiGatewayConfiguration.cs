@@ -64,8 +64,13 @@ internal static class ApiGatewayConfiguration
 
     internal static void RegisterAuthentication(this IServiceCollection _, WebApplicationBuilder builder)
     {
-        var projectId = builder.Configuration["SUPER_BASE_PROJECT_ID"];
-        var issuer = $"https://{projectId}.supabase.co/auth/v1";
+        var issuer = builder.Configuration["SUPABASE_JWT_ISSUER"];
+
+        if(string.IsNullOrWhiteSpace(issuer))
+        {
+            throw new ArgumentException("Missing SUPABASE_JWT_ISSUER configuration");
+        }
+
         const string audience = "authenticated";
 
         builder.Services
