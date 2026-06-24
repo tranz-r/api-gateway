@@ -1,8 +1,8 @@
 ﻿using APIGateway.Proxy.Auth;
 using APIGateway.Proxy.Auth.Requirements.PaymentRead;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
@@ -66,7 +66,7 @@ internal static class ApiGatewayConfiguration
     {
         var issuer = builder.Configuration["SUPABASE_JWT_ISSUER"];
 
-        if(string.IsNullOrWhiteSpace(issuer))
+        if (string.IsNullOrWhiteSpace(issuer))
         {
             throw new ArgumentException("Missing SUPABASE_JWT_ISSUER configuration");
         }
