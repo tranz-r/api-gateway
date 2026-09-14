@@ -480,5 +480,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# PR Lens scratch (rendered SVGs / graphs — regenerated on demand)
+.pr-lens/
+
 # Vim temporary swap files
 *.swp

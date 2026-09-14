@@ -1,0 +1,21 @@
+# PR Lens — https://prlens.dev (GitHub App posts diagrams on PRs)
+schemaVersion: 0.1.1
+lenses: [architecture, data-flow]
+branding: true
+github:
+  comment:
+    collapsed: false
+map:
+  exclude:
+    - "**/*Tests*/**"
+    - "**/*.md"
+  lane:
+    - match: Src/APIGateway.Proxy/**
+      lane: proxy
+    - match: Tests/**
+      lane: tests
+    - match: .github/**
+      lane: ci
+  rename:
+    - match: Src/APIGateway.Proxy/**
+      to: API Gateway proxy
