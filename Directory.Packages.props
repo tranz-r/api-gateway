@@ -10,6 +10,7 @@
         <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.17.0" />
         <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.17.0" />
         <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.17.0" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
         <PackageVersion Include="OpenTelemetry" Version="1.15.3" />
         <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
         <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
@@ -20,5 +21,7 @@
         <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
         <PackageVersion Include="Supabase" Version="1.1.1" />
         <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+        <PackageVersion Include="xunit" Version="2.9.2" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     </ItemGroup>
 </Project>

@@ -13,7 +13,6 @@ internal static class HttpLoggingConfiguration
         {
             options.LoggingFields = HttpLoggingFields.RequestMethod
                 | HttpLoggingFields.RequestPath
-                | HttpLoggingFields.RequestQuery
                 | HttpLoggingFields.ResponseStatusCode
                 | HttpLoggingFields.Duration;
             options.CombineLogs = true;
