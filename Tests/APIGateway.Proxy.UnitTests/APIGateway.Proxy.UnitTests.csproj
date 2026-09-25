@@ -18,4 +18,8 @@
         <ProjectReference Include="../../Src/APIGateway.Proxy/APIGateway.Proxy.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="../../Src/APIGateway.Proxy/appsettings.json" Link="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
 </Project>
