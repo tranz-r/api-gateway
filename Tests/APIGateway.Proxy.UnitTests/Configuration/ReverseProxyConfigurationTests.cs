@@ -13,6 +13,7 @@ public sealed class ReverseProxyConfigurationTests
             .GetProperty("ReverseProxy")
             .GetProperty("Routes");
 
+        AssertRoute(routes, "seo-n8n-route", "/api/v1/seo/n8n/{**catch-all}", "tranzr-cluster", "anonymous");
         AssertRoute(routes, "quote-route-v2", "/api/v2/quote/{**catch-all}", "tranzr-cluster", "anonymous");
         AssertRoute(routes, "quote-routes-v2", "/api/v2/quotes/{**catch-all}", "tranzr-cluster", "anonymous");
     }
