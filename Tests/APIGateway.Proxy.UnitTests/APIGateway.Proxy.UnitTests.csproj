@@ -20,6 +20,7 @@
 
     <ItemGroup>
         <None Include="../../Src/APIGateway.Proxy/appsettings.json" Link="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="../../Src/APIGateway.Proxy/appsettings.Development.json" Link="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>
