@@ -48,6 +48,52 @@ public sealed class ItemRouteForwardingTests
         Assert.Contains("route-review", await response.Content.ReadAsStringAsync());
         Assert.Equal("2", response.Headers.RetryAfter?.ToString());
     }
+    [Theory]
+    [InlineData(200)]
+    [InlineData(503)]
+    public async Task SimulationBasis_RequiresAuthentication_AndForwardsConfiguredLimits(int status)
+    {
+        const string path = "/api/v1/admin/item-transport/policy/simulation-basis";
+        const string body = """{"catalogueVersion":18,"grossVanM3":24,"loadFactor":0.85,"usableVanM3":20.4,"usablePayloadKg":1250}""";
+        var called = false;
+        await using var upstream = CreateApp();
+        upstream.MapGet(path, async context => { called = true; context.Response.StatusCode = status; await context.Response.WriteAsync(body); });
+        await upstream.StartAsync();
+        await using var proxy = CreateProxy(Address(upstream)); await proxy.StartAsync();
+        using var client = new HttpClient { BaseAddress = new Uri(Address(proxy)) };
+        using var anonymous = await client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode); Assert.False(called);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "fixture");
+        using var response = await client.GetAsync(path);
+        Assert.Equal(status, (int)response.StatusCode);
+        Assert.Equal(body, await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData(200)]
+    [InlineData(400)]
+    [InlineData(503)]
+    public async Task SimulationInputs_ForwardsExistingLoadWithoutChangingAuthentication(int status)
+    {
+        const string path = "/api/v1/admin/item-transport/policy/simulations/inputs";
+        const string payload = """{"volumeM3":2.3,"weightKg":80,"currentLoadVolumeM3":18,"currentLoadWeightKg":500}""";
+        string? received = null;
+        await using var upstream = CreateApp();
+        upstream.MapPost(path, async context =>
+        {
+            received = await new StreamReader(context.Request.Body).ReadToEndAsync();
+            context.Response.StatusCode = status; await context.Response.WriteAsync("simulation");
+        });
+        await upstream.StartAsync();
+        await using var proxy = CreateProxy(Address(upstream)); await proxy.StartAsync();
+        using var client = new HttpClient { BaseAddress = new Uri(Address(proxy)) };
+        using var anonymous = await client.PostAsync(path, new StringContent(payload, Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode); Assert.Null(received);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "fixture");
+        using var response = await client.PostAsync(path, new StringContent(payload, Encoding.UTF8, "application/json"));
+        Assert.Equal(status, (int)response.StatusCode); Assert.Equal(payload, received);
+    }
+
     private static WebApplication CreateApp()
     {
         var builder = WebApplication.CreateBuilder();
